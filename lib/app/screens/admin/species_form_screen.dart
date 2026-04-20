@@ -1,0 +1,248 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../theme/app_colors.dart';
+import '../../models/butterfly_model.dart';
+import '../../widgets/common/custom_button.dart';
+import '../../widgets/common/custom_text_field.dart';
+
+class SpeciesFormScreen extends StatefulWidget {
+  final ButterflyModel? butterfly;
+  const SpeciesFormScreen({super.key, this.butterfly});
+
+  @override
+  State<SpeciesFormScreen> createState() => _SpeciesFormScreenState();
+}
+
+class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _scientificNameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  bool _isToxic = false;
+  bool _isLoading = false;
+
+  bool get _isEditing => widget.butterfly != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      final b = widget.butterfly!;
+      _nameController.text = b.name;
+      _scientificNameController.text = b.scientificName;
+      _descriptionController.text = b.description;
+      _isToxic = b.isToxic;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _scientificNameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _handleSubmit() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      await Future.delayed(const Duration(milliseconds: 1200));
+      if (mounted) {
+        setState(() => _isLoading = false);
+        final newButterfly = ButterflyModel(
+          id: widget.butterfly?.id ?? DateTime.now().millisecondsSinceEpoch,
+          name: _nameController.text.trim(),
+          scientificName: _scientificNameController.text.trim(),
+          isToxic: _isToxic,
+          description: _descriptionController.text.trim(),
+        );
+        Navigator.pop(context, newButterfly);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isEditing
+                  ? 'Spesies berhasil diperbarui!'
+                  : 'Spesies baru berhasil ditambahkan!',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Spesies' : 'Tambah Spesies'),
+        backgroundColor: AppColors.background,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image placeholder
+                Center(
+                  child: GestureDetector(
+                    onTap: () {}, // TODO: image picker
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.primary.withOpacity(0.4), width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.15),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_photo_alternate_rounded,
+                              size: 36, color: AppColors.primary),
+                          const SizedBox(height: 4),
+                          Text('Upload\nGambar',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 10, color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                // Toxic toggle
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _isToxic
+                          ? AppColors.danger.withOpacity(0.4)
+                          : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (_isToxic ? AppColors.danger : AppColors.safe)
+                              .withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _isToxic
+                              ? Icons.warning_rounded
+                              : Icons.check_circle_rounded,
+                          color: _isToxic ? AppColors.danger : AppColors.safe,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isToxic ? 'Beracun' : 'Tidak Beracun',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _isToxic
+                                    ? AppColors.danger
+                                    : AppColors.safe,
+                              ),
+                            ),
+                            Text(
+                              'Toggle untuk mengubah status racun',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _isToxic,
+                        onChanged: (v) => setState(() => _isToxic = v),
+                        activeThumbColor: AppColors.danger,
+                        inactiveThumbColor: AppColors.safe,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Name field
+                CustomTextField(
+                  label: 'Nama Spesies',
+                  hint: 'Contoh: Monarch Butterfly',
+                  controller: _nameController,
+                  prefixIcon: Icons.flutter_dash,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Nama spesies wajib diisi';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                // Scientific name
+                CustomTextField(
+                  label: 'Nama Ilmiah',
+                  hint: 'Contoh: Danaus plexippus',
+                  controller: _scientificNameController,
+                  prefixIcon: Icons.science_rounded,
+                ),
+                const SizedBox(height: 20),
+                // Description
+                CustomTextField(
+                  label: 'Deskripsi',
+                  hint: 'Masukkan deskripsi spesies...',
+                  controller: _descriptionController,
+                  prefixIcon: Icons.description_rounded,
+                  maxLines: 4,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Deskripsi wajib diisi';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 32),
+                CustomButton(
+                  text: _isEditing ? 'Simpan Perubahan' : 'Tambahkan Spesies',
+                  icon: _isEditing ? Icons.save_rounded : Icons.add_rounded,
+                  isLoading: _isLoading,
+                  onPressed: _handleSubmit,
+                ),
+                const SizedBox(height: 12),
+                CustomButton(
+                  text: 'Batal',
+                  isOutlined: true,
+                  color: AppColors.textHint,
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
