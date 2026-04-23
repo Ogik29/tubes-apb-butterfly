@@ -66,6 +66,12 @@ class _ScanScreenState extends State<ScanScreen> {
       appBar: AppBar(
         title: const Text('Scan Kupu-Kupu'),
         backgroundColor: AppColors.background,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(

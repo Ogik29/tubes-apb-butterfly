@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../models/scan_result_model.dart';
+import '../../models/butterfly_model.dart';
 import '../../widgets/common/toxicity_badge.dart';
 import '../../../main.dart';
 import '../scan/scan_screen.dart';
@@ -228,16 +229,99 @@ class _HomeTab extends StatelessWidget {
   }
 
   Widget _buildStatsRow() {
-    return Row(
+    // Hitung data dinamis dari sample data
+    final totalScan = sampleScanHistory.length;
+    final safeButterflies =
+        sampleButterflies.where((b) => b.isCollected && !b.isToxic).length;
+    final toxicFound =
+        sampleButterflies.where((b) => b.isCollected && b.isToxic).length;
+    final collectedCount = sampleButterflies.where((b) => b.isCollected).length;
+    final totalCount = sampleButterflies.length;
+
+    // Rata-rata confidence dari semua scan yang tersimpan
+    final savedScans = sampleScanHistory.where((s) => s.isSaved).toList();
+    final avgConfidence = savedScans.isEmpty
+        ? 0.0
+        : savedScans.map((s) => s.confidence).reduce((a, b) => a + b) /
+            savedScans.length;
+
+    return Column(
       children: [
-        _buildStatCard(
-            '5', 'Total Scan', Icons.camera_alt_rounded, AppColors.secondary),
-        const SizedBox(width: 12),
-        _buildStatCard('4', 'Terkoleksi', Icons.collections_bookmark_rounded,
-            AppColors.primary),
-        const SizedBox(width: 12),
-        _buildStatCard(
-            '2', 'Beracun\nDitemukan', Icons.warning_rounded, AppColors.danger),
+        Row(
+          children: [
+            _buildStatCard('$totalScan', 'Total Scan', Icons.camera_alt_rounded,
+                AppColors.secondary),
+            const SizedBox(width: 12),
+            _buildStatCard('$safeButterflies', 'Kupu-Kupu\nAman',
+                Icons.flutter_dash, AppColors.safe),
+            const SizedBox(width: 12),
+            _buildStatCard('$toxicFound', 'Kupu-Kupu\nBeracun',
+                Icons.warning_rounded, AppColors.danger),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Card rata-rata keyakinan berdasar koleksi user
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.analytics_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Rata-rata \nKeyakinan Model',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, color: AppColors.textSecondary, height: 1.2),
+                    ),
+                    Text(
+                      '${(avgConfidence * 100).toStringAsFixed(1)}%',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$collectedCount/$totalCount spesies',
+                    style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary),
+                  ),
+                  Text(
+                    'terkoleksi',
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: AppColors.textHint),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

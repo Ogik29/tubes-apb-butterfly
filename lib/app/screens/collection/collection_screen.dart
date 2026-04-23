@@ -33,9 +33,6 @@ class _CollectionScreenState extends State<CollectionScreen> {
     }
   }
 
-  int get _collectedCount => sampleButterflies.where((b) => b.isCollected).length;
-  int get _totalCount => sampleButterflies.length;
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -61,7 +58,8 @@ class _CollectionScreenState extends State<CollectionScreen> {
           ),
           backgroundColor: AppColors.surfaceLight,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -78,12 +76,17 @@ class _CollectionScreenState extends State<CollectionScreen> {
       appBar: AppBar(
         title: const Text('Koleksi Kupu-Kupu'),
         backgroundColor: AppColors.background,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildProgressHeader(),
             _buildSearchBar(),
             _buildFilterChips(),
             Expanded(
@@ -107,100 +110,6 @@ class _CollectionScreenState extends State<CollectionScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProgressHeader() {
-    final progress = _collectedCount / _totalCount;
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
-            blurRadius: 16,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Progres Koleksi',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$_collectedCount / $_totalCount Spesies',
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withOpacity(0.15),
-                  border: Border.all(
-                      color: AppColors.primary.withOpacity(0.4), width: 2),
-                ),
-                child: Center(
-                  child: Text(
-                    '${(progress * 100).toStringAsFixed(0)}%',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.surfaceLight,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.star_rounded, color: AppColors.primary, size: 12),
-              const SizedBox(width: 4),
-              Text(
-                '$_collectedCount ditemukan • ${_totalCount - _collectedCount} belum ditemukan',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -250,7 +159,8 @@ class _CollectionScreenState extends State<CollectionScreen> {
               onTap: () => setState(() => _filter = f.$1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary.withOpacity(0.2)
@@ -265,7 +175,9 @@ class _CollectionScreenState extends State<CollectionScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -281,7 +193,8 @@ class _CollectionScreenState extends State<CollectionScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.search_off_rounded, size: 60, color: AppColors.textHint),
+          const Icon(Icons.search_off_rounded,
+              size: 60, color: AppColors.textHint),
           const SizedBox(height: 16),
           Text(
             'Tidak ditemukan',

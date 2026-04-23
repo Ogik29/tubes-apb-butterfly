@@ -38,14 +38,21 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo atau Icon aplikasi
-                const Icon(
-                  Icons.lock_person_rounded,
-                  size: 100,
-                  color: AppColors.primary,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '🦋',
+                    style: TextStyle(fontSize: 64),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Selamat Datang hehe :3',
+                  'MOTHRA :3',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 24,
@@ -55,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Silakan masuk ke akunmu',
+                  'Monggo',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(color: AppColors.textSecondary),
                 ),

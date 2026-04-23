@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../models/butterfly_model.dart';
 import '../../widgets/common/toxicity_badge.dart';
-import '../../widgets/common/custom_button.dart';
 
 class SpeciesDetailScreen extends StatelessWidget {
   final ButterflyModel butterfly;
@@ -38,18 +37,11 @@ class SpeciesDetailScreen extends StatelessWidget {
                 children: [
                   Container(
                     color: AppColors.surfaceLight,
-                    child: Icon(
-                      Icons.flutter_dash,
-                      size: 120,
-                      color: statusColor.withOpacity(0.5),
-                    ),
+                    child: Icon(Icons.flutter_dash, size: 120,
+                        color: statusColor.withOpacity(0.5)),
                   ),
-                  // Overlay
                   Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 100,
+                    bottom: 0, left: 0, right: 0, height: 100,
                     child: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
@@ -62,19 +54,16 @@ class SpeciesDetailScreen extends StatelessWidget {
                   ),
                   if (butterfly.isCollected)
                     Positioned(
-                      top: 56,
-                      right: 20,
+                      top: 56, right: 20,
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.primary.withOpacity(0.9),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.5),
-                              blurRadius: 12,
-                            ),
-                          ],
+                          boxShadow: [BoxShadow(
+                            color: AppColors.primary.withOpacity(0.5),
+                            blurRadius: 12,
+                          )],
                         ),
                         child: const Icon(Icons.star_rounded,
                             color: Colors.white, size: 20),
@@ -97,23 +86,19 @@ class SpeciesDetailScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              butterfly.name,
-                              style: GoogleFonts.poppins(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            if (butterfly.scientificName.isNotEmpty)
-                              Text(
-                                butterfly.scientificName,
+                            Text(butterfly.name,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                )),
+                            if (butterfly.scientificName.isNotEmpty)
+                              Text(butterfly.scientificName,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppColors.textSecondary,
+                                  )),
                           ],
                         ),
                       ),
@@ -121,6 +106,7 @@ class SpeciesDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
+
                   // Collected status
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -134,14 +120,6 @@ class SpeciesDetailScreen extends StatelessWidget {
                             ? AppColors.primary.withOpacity(0.4)
                             : AppColors.border,
                       ),
-                      boxShadow: butterfly.isCollected
-                          ? [
-                              BoxShadow(
-                                color: AppColors.primary.withOpacity(0.15),
-                                blurRadius: 12,
-                              ),
-                            ]
-                          : null,
                     ),
                     child: Row(
                       children: [
@@ -172,15 +150,9 @@ class SpeciesDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
+
                   // Description
-                  Text(
-                    'Deskripsi',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  _buildSectionTitle('Deskripsi'),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -198,39 +170,87 @@ class SpeciesDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // Properties
-                  Text(
-                    'Informasi',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+
+                  // === SARAN KESELAMATAN (hanya untuk yang beracun) ===
+                  if (isToxic && butterfly.safetyAdvice != null) ...[
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Icon(Icons.health_and_safety_rounded,
+                            color: AppColors.danger, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Saran Keselamatan',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.dangerLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: AppColors.danger.withOpacity(0.4)),
+                      ),
+                      child: Text(
+                        butterfly.safetyAdvice!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                          height: 1.7,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // Properties / Informasi detail
+                  _buildSectionTitle('Informasi Spesies'),
                   const SizedBox(height: 8),
                   _buildInfoItem('Nama Ilmiah', butterfly.scientificName),
                   _buildInfoItem(
-                      'Status Racun', isToxic ? 'Beracun' : 'Tidak Beracun'),
+                      'Status Racun', isToxic ? '⚠️ Beracun' : '✅ Tidak Beracun'),
+                  if (butterfly.habitat != null)
+                    _buildInfoItem('Habitat', butterfly.habitat!),
+                  if (butterfly.distribution != null)
+                    _buildInfoItem('Persebaran', butterfly.distribution!),
+                  if (butterfly.wingSpan != null)
+                    _buildInfoItem('Rentang Sayap', butterfly.wingSpan!),
+                  if (butterfly.diet != null)
+                    _buildInfoItem('Makanan', butterfly.diet!),
+                  if (butterfly.toxinType != null)
+                    _buildInfoItem('Jenis Racun', butterfly.toxinType!),
+                  if (butterfly.conservationStatus != null)
+                    _buildInfoItem(
+                        'Status Konservasi', butterfly.conservationStatus!),
                   _buildInfoItem(
-                      'Status Koleksi',
-                      butterfly.isCollected
-                          ? 'Sudah ditemukan'
-                          : 'Belum ditemukan'),
-                  const SizedBox(height: 24),
-                  // Scan button
-                  CustomButton(
-                    text: 'Scan Spesies Ini',
-                    icon: Icons.camera_rounded,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/scan'),
+                    'Status Koleksi',
+                    butterfly.isCollected ? '⭐ Sudah ditemukan' : '🔒 Belum ditemukan',
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
       ),
     );
   }
@@ -245,21 +265,26 @@ class SpeciesDetailScreen extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppColors.textSecondary,
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],

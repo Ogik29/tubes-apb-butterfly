@@ -36,6 +36,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppBar(
         title: const Text('Riwayat Scan'),
         backgroundColor: AppColors.background,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(

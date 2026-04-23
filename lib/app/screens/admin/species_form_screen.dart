@@ -18,6 +18,13 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
   final _nameController = TextEditingController();
   final _scientificNameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _habitatController = TextEditingController();
+  final _distributionController = TextEditingController();
+  final _wingSpanController = TextEditingController();
+  final _toxinTypeController = TextEditingController();
+  final _safetyAdviceController = TextEditingController();
+  final _conservationStatusController = TextEditingController();
+  final _dietController = TextEditingController();
   bool _isToxic = false;
   bool _isLoading = false;
 
@@ -32,6 +39,13 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
       _scientificNameController.text = b.scientificName;
       _descriptionController.text = b.description;
       _isToxic = b.isToxic;
+      _habitatController.text = b.habitat ?? '';
+      _distributionController.text = b.distribution ?? '';
+      _wingSpanController.text = b.wingSpan ?? '';
+      _toxinTypeController.text = b.toxinType ?? '';
+      _safetyAdviceController.text = b.safetyAdvice ?? '';
+      _conservationStatusController.text = b.conservationStatus ?? '';
+      _dietController.text = b.diet ?? '';
     }
   }
 
@@ -40,6 +54,13 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
     _nameController.dispose();
     _scientificNameController.dispose();
     _descriptionController.dispose();
+    _habitatController.dispose();
+    _distributionController.dispose();
+    _wingSpanController.dispose();
+    _toxinTypeController.dispose();
+    _safetyAdviceController.dispose();
+    _conservationStatusController.dispose();
+    _dietController.dispose();
     super.dispose();
   }
 
@@ -55,6 +76,28 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
           scientificName: _scientificNameController.text.trim(),
           isToxic: _isToxic,
           description: _descriptionController.text.trim(),
+          habitat: _habitatController.text.trim().isEmpty
+              ? null
+              : _habitatController.text.trim(),
+          distribution: _distributionController.text.trim().isEmpty
+              ? null
+              : _distributionController.text.trim(),
+          wingSpan: _wingSpanController.text.trim().isEmpty
+              ? null
+              : _wingSpanController.text.trim(),
+          toxinType: _isToxic && _toxinTypeController.text.trim().isNotEmpty
+              ? _toxinTypeController.text.trim()
+              : null,
+          safetyAdvice:
+              _isToxic && _safetyAdviceController.text.trim().isNotEmpty
+                  ? _safetyAdviceController.text.trim()
+                  : null,
+          conservationStatus: _conservationStatusController.text.trim().isEmpty
+              ? null
+              : _conservationStatusController.text.trim(),
+          diet: _dietController.text.trim().isEmpty
+              ? null
+              : _dietController.text.trim(),
         );
         Navigator.pop(context, newButterfly);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +146,8 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
                         color: AppColors.surface,
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: AppColors.primary.withOpacity(0.4), width: 2),
+                            color: AppColors.primary.withOpacity(0.4),
+                            width: 2),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.primary.withOpacity(0.15),
@@ -120,7 +164,8 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
                           Text('Upload\nGambar',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                  fontSize: 10, color: AppColors.textSecondary)),
+                                  fontSize: 10,
+                                  color: AppColors.textSecondary)),
                         ],
                       ),
                     ),
@@ -198,7 +243,8 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
                   controller: _nameController,
                   prefixIcon: Icons.flutter_dash,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Nama spesies wajib diisi';
+                    if (v == null || v.isEmpty)
+                      return 'Nama spesies wajib diisi';
                     return null;
                   },
                 ),
@@ -211,9 +257,9 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
                   prefixIcon: Icons.science_rounded,
                 ),
                 const SizedBox(height: 20),
-                // Description
+                // Deskripsi
                 CustomTextField(
-                  label: 'Deskripsi',
+                  label: 'Deskripsi Tambahan',
                   hint: 'Masukkan deskripsi spesies...',
                   controller: _descriptionController,
                   prefixIcon: Icons.description_rounded,
@@ -223,7 +269,78 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+                // Habitat
+                CustomTextField(
+                  label: 'Habitat',
+                  hint: 'Contoh: Hutan Hujan Tropis',
+                  controller: _habitatController,
+                  prefixIcon: Icons.landscape_rounded,
+                ),
+                const SizedBox(height: 20),
+                // Distribution
+                CustomTextField(
+                  label: 'Persebaran',
+                  hint: 'Contoh: Asia Tenggara',
+                  controller: _distributionController,
+                  prefixIcon: Icons.map_rounded,
+                ),
+                const SizedBox(height: 20),
+                // Wing Span
+                CustomTextField(
+                  label: 'Rentang Sayap',
+                  hint: 'Contoh: 8-12 cm',
+                  controller: _wingSpanController,
+                  prefixIcon: Icons.straighten_rounded,
+                ),
+                const SizedBox(height: 20),
+                // Diet
+                CustomTextField(
+                  label: 'Makanan',
+                  hint: 'Contoh: Nektar bunga',
+                  controller: _dietController,
+                  prefixIcon: Icons.restaurant_rounded,
+                ),
+                const SizedBox(height: 20),
+                // Conservation Status
+                CustomTextField(
+                  label: 'Status Konservasi',
+                  hint: 'Contoh: Least Concern (LC)',
+                  controller: _conservationStatusController,
+                  prefixIcon: Icons.eco_rounded,
+                ),
+                const SizedBox(height: 20),
+
+                // === Conditionally Rendered Toxin Info ===
+                if (_isToxic) ...[
+                  const Divider(color: AppColors.border),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Informasi Racun & Keselamatan',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.danger,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    label: 'Jenis Racun',
+                    hint: 'Contoh: Cyanogenic glycosides',
+                    controller: _toxinTypeController,
+                    prefixIcon: Icons.science_rounded,
+                  ),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                    label: 'Saran Keselamatan',
+                    hint: 'Contoh: Segera cuci tangan setelah menyentuh...',
+                    controller: _safetyAdviceController,
+                    prefixIcon: Icons.health_and_safety_rounded,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                const SizedBox(height: 12),
                 CustomButton(
                   text: _isEditing ? 'Simpan Perubahan' : 'Tambahkan Spesies',
                   icon: _isEditing ? Icons.save_rounded : Icons.add_rounded,
