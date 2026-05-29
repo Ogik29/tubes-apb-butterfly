@@ -243,8 +243,9 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
                   controller: _nameController,
                   prefixIcon: Icons.flutter_dash,
                   validator: (v) {
-                    if (v == null || v.isEmpty)
+                    if (v == null || v.isEmpty) {
                       return 'Nama spesies wajib diisi';
+                    }
                     return null;
                   },
                 ),
