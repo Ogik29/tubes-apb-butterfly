@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../models/scan_result_model.dart';
 import '../../widgets/common/toxicity_badge.dart';
+import '../../services/api_service.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -15,17 +16,73 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   String _filter = 'all'; // all, toxic, safe, saved
+  List<ScanResultModel> _history = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHistory();
+  }
+
+  Future<void> _fetchHistory() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final list = await ApiService.getHistory();
+      setState(() {
+        _history = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deleteItem(int id, int index) async {
+    try {
+      await ApiService.deleteHistory(id);
+      setState(() {
+        _history.removeWhere((item) => item.id == id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Riwayat berhasil dihapus', style: GoogleFonts.poppins()),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus riwayat: $e', style: GoogleFonts.poppins()),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+      _fetchHistory();
+    }
+  }
 
   List<ScanResultModel> get _filteredList {
     switch (_filter) {
       case 'toxic':
-        return sampleScanHistory.where((s) => s.isToxic).toList();
+        return _history.where((s) => s.isToxic).toList();
       case 'safe':
-        return sampleScanHistory.where((s) => !s.isToxic).toList();
+        return _history.where((s) => !s.isToxic).toList();
       case 'saved':
-        return sampleScanHistory.where((s) => s.isSaved).toList();
+        return _history.where((s) => s.isSaved).toList();
       default:
-        return sampleScanHistory;
+        return _history;
     }
   }
 
@@ -53,20 +110,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Filter chips
             _buildFilterChips(),
-            // Stats row
             _buildStatsRow(),
-            // List
             Expanded(
-              child: _filteredList.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _filteredList.length,
-                      itemBuilder: (ctx, i) =>
-                          _buildHistoryItem(ctx, _filteredList[i]),
-                    ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 48),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _errorMessage!,
+                                  style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _fetchHistory,
+                                  child: Text('Coba Lagi', style: GoogleFonts.poppins()),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _fetchHistory,
+                          child: _filteredList.isEmpty
+                              ? ListView(
+                                  children: [
+                                    const SizedBox(height: 100),
+                                    _buildEmptyState(),
+                                  ],
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: _filteredList.length,
+                                  itemBuilder: (ctx, i) =>
+                                      _buildHistoryItem(ctx, _filteredList[i], i),
+                                ),
+                        ),
             ),
           ],
         ),
@@ -137,8 +226,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildStatsRow() {
-    final total = sampleScanHistory.length;
-    final toxic = sampleScanHistory.where((s) => s.isToxic).length;
+    final total = _history.length;
+    final toxic = _history.where((s) => s.isToxic).length;
     final safe = total - toxic;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -182,102 +271,152 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildHistoryItem(BuildContext context, ScanResultModel scan) {
+  Widget _buildHistoryItem(BuildContext context, ScanResultModel scan, int index) {
     final isToxic = scan.isToxic;
     final color = isToxic ? AppColors.danger : AppColors.safe;
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/result', arguments: scan),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+    return Dismissible(
+      key: Key(scan.id?.toString() ?? UniqueKey().toString()),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20.0),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.danger,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
         ),
-        child: Row(
-          children: [
-            // Thumbnail
-            Container(
-              width: 80,
-              height: 80,
-              margin: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withOpacity(0.3)),
+        child: const Icon(Icons.delete_rounded, color: Colors.white, size: 28),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text("Hapus Riwayat", style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+              content: Text("Apakah Anda yakin ingin menghapus hasil scan ini?", style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary)),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text("Batal", style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text("Hapus", style: GoogleFonts.poppins()),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) {
+        if (scan.id != null) {
+          _deleteItem(scan.id!, index);
+        }
+      },
+      child: GestureDetector(
+        onTap: () async {
+          await Navigator.pushNamed(context, '/result', arguments: scan);
+          _fetchHistory();
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              // Thumbnail
+              Container(
+                width: 80,
+                height: 80,
+                margin: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withOpacity(0.3)),
+                ),
+                child: scan.imagePath.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: scan.imagePath.startsWith('http')
+                            ? Image.network(
+                                scan.imagePath,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(scan.imagePath),
+                                fit: BoxFit.cover,
+                              ),
+                      )
+                    : Icon(Icons.flutter_dash, color: color, size: 36),
               ),
-              child: scan.imagePath.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(
-                        File(scan.imagePath),
-                        fit: BoxFit.cover,
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        scan.predictedSpecies,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    )
-                  : Icon(Icons.flutter_dash, color: color, size: 36),
-            ),
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      scan.predictedSpecies,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('dd MMM yyyy • HH:mm').format(scan.scannedAt),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      DateFormat('dd MMM yyyy • HH:mm').format(scan.scannedAt),
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        ToxicityBadge(isToxic: isToxic),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '${(scan.confidence * 100).toStringAsFixed(0)}%',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          ToxicityBadge(isToxic: isToxic),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${(scan.confidence * 100).toStringAsFixed(0)}%',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
-                        ),
-                        if (scan.isSaved) ...[
-                          const SizedBox(width: 6),
-                          const Icon(Icons.bookmark_rounded,
-                              color: AppColors.accent, size: 14),
+                          if (scan.isSaved) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.bookmark_rounded,
+                                color: AppColors.accent, size: 14),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            // Arrow
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textHint, size: 20),
-            ),
-          ],
+              // Arrow
+              const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.chevron_right_rounded,
+                    color: AppColors.textHint, size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../models/butterfly_model.dart';
+import '../../services/api_service.dart';
 
 class CollectionScreen extends StatefulWidget {
   const CollectionScreen({super.key});
@@ -14,9 +15,39 @@ class _CollectionScreenState extends State<CollectionScreen> {
   String _filter = 'all';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  
+  List<ButterflyModel> _butterflies = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchButterflies();
+  }
+
+  Future<void> _fetchButterflies() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final list = await ApiService.getButterflies();
+      setState(() {
+        _butterflies = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
 
   List<ButterflyModel> get _filteredList {
-    var list = sampleButterflies.where((b) {
+    var list = _butterflies.where((b) {
       final matchSearch = _searchQuery.isEmpty ||
           b.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           b.scientificName.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -39,7 +70,7 @@ class _CollectionScreenState extends State<CollectionScreen> {
     super.dispose();
   }
 
-  void _onCardTap(BuildContext ctx, ButterflyModel butterfly) {
+  void _onCardTap(BuildContext ctx, ButterflyModel butterfly) async {
     if (!butterfly.isCollected) {
       // Tampilkan snackbar / dialog — tidak boleh masuk ke detail
       ScaffoldMessenger.of(ctx).showSnackBar(
@@ -66,7 +97,8 @@ class _CollectionScreenState extends State<CollectionScreen> {
       return;
     }
     // Hanya yang sudah dikumpulkan boleh ke detail
-    Navigator.pushNamed(ctx, '/species-detail', arguments: butterfly);
+    await Navigator.pushNamed(ctx, '/species-detail', arguments: butterfly);
+    _fetchButterflies();
   }
 
   @override
@@ -90,23 +122,58 @@ class _CollectionScreenState extends State<CollectionScreen> {
             _buildSearchBar(),
             _buildFilterChips(),
             Expanded(
-              child: _filteredList.isEmpty
-                  ? _buildEmptyState()
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.78,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: _filteredList.length,
-                      itemBuilder: (ctx, i) => _CollectionCard(
-                        butterfly: _filteredList[i],
-                        onTap: () => _onCardTap(ctx, _filteredList[i]),
-                      ),
-                    ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 48),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _errorMessage!,
+                                  style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _fetchButterflies,
+                                  child: Text('Coba Lagi', style: GoogleFonts.poppins()),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _fetchButterflies,
+                          child: _filteredList.isEmpty
+                              ? ListView(
+                                  children: [
+                                    const SizedBox(height: 100),
+                                    _buildEmptyState(),
+                                  ],
+                                )
+                              : GridView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 0.78,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
+                                  itemCount: _filteredList.length,
+                                  itemBuilder: (ctx, i) => _CollectionCard(
+                                    butterfly: _filteredList[i],
+                                    onTap: () => _onCardTap(ctx, _filteredList[i]),
+                                  ),
+                                ),
+                        ),
             ),
           ],
         ),
@@ -254,17 +321,29 @@ class _CollectionCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Background icon
+                    // Background icon / image
                     Container(
                       color: AppColors.surfaceLight,
                       child: Center(
-                        child: Icon(
-                          Icons.flutter_dash,
-                          size: 52,
-                          color: isCollected
-                              ? AppColors.primary.withOpacity(0.7)
-                              : AppColors.textHint.withOpacity(0.3),
-                        ),
+                        child: isCollected && butterfly.imageUrl != null && butterfly.imageUrl!.isNotEmpty
+                            ? Image.network(
+                                butterfly.imageUrl!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) => Icon(
+                                  Icons.flutter_dash,
+                                  size: 52,
+                                  color: AppColors.primary.withOpacity(0.7),
+                                ),
+                              )
+                            : Icon(
+                                Icons.flutter_dash,
+                                size: 52,
+                                color: isCollected
+                                    ? AppColors.primary.withOpacity(0.7)
+                                    : AppColors.textHint.withOpacity(0.3),
+                              ),
                       ),
                     ),
                     // Overlay gelap jika locked

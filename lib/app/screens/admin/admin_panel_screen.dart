@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../models/butterfly_model.dart';
 import '../../widgets/common/toxicity_badge.dart';
+import '../../services/api_service.dart';
+import '../../../main.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -12,9 +14,36 @@ class AdminPanelScreen extends StatefulWidget {
 }
 
 class _AdminPanelScreenState extends State<AdminPanelScreen> {
-  final List<ButterflyModel> _species = List.from(sampleButterflies);
+  List<ButterflyModel> _species = [];
+  bool _isLoading = true;
+  String? _errorMessage;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSpecies();
+  }
+
+  Future<void> _fetchSpecies() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final list = await ApiService.getButterflies();
+      setState(() {
+        _species = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
 
   List<ButterflyModel> get _filteredSpecies {
     if (_searchQuery.isEmpty) return _species;
@@ -38,10 +67,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       appBar: AppBar(
         title: const Text('Admin Panel'),
         backgroundColor: AppColors.background,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
@@ -55,8 +87,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             context,
             '/species-form',
           );
-          if (result != null && result is ButterflyModel) {
-            setState(() => _species.add(result));
+          if (result != null) {
+            _fetchSpecies();
           }
         },
         backgroundColor: AppColors.primary,
@@ -111,14 +143,49 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
             // List
             Expanded(
-              child: _filteredSpecies.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                      itemCount: _filteredSpecies.length,
-                      itemBuilder: (ctx, i) =>
-                          _buildSpeciesItem(ctx, _filteredSpecies[i]),
-                    ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 48),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _errorMessage!,
+                                  style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _fetchSpecies,
+                                  child: Text('Coba Lagi', style: GoogleFonts.poppins()),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _fetchSpecies,
+                          child: _filteredSpecies.isEmpty
+                              ? ListView(
+                                  children: [
+                                    const SizedBox(height: 100),
+                                    _buildEmptyState(),
+                                  ],
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                                  itemCount: _filteredSpecies.length,
+                                  itemBuilder: (ctx, i) =>
+                                      _buildSpeciesItem(ctx, _filteredSpecies[i]),
+                                ),
+                        ),
             ),
           ],
         ),
@@ -231,11 +298,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           icon: const Icon(Icons.more_vert_rounded, color: AppColors.textHint),
           onSelected: (action) async {
             if (action == 'edit') {
-              await Navigator.pushNamed(
+              final result = await Navigator.pushNamed(
                 context,
                 '/species-form',
                 arguments: butterfly,
               );
+              if (result != null) {
+                _fetchSpecies();
+              }
             } else if (action == 'delete') {
               _showDeleteDialog(context, butterfly);
             }
@@ -314,16 +384,33 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 style: GoogleFonts.poppins(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() => _species.removeWhere((b) => b.id == butterfly.id));
+            onPressed: () async {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${butterfly.name} telah dihapus',
-                      style: GoogleFonts.poppins()),
-                  backgroundColor: AppColors.danger,
-                ),
-              );
+              try {
+                await ApiService.deleteButterfly(butterfly.id);
+                setState(() {
+                  _species.removeWhere((b) => b.id == butterfly.id);
+                });
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${butterfly.name} telah dihapus',
+                          style: GoogleFonts.poppins()),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal menghapus: $e',
+                          style: GoogleFonts.poppins()),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: Text('Hapus', style: GoogleFonts.poppins()),
@@ -352,10 +439,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 style: GoogleFonts.poppins(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushNamedAndRemoveUntil(
-                  context, '/login', (r) => false);
+              await ApiService.logout();
+              if (context.mounted) {
+                AppState.of(context)?.setUser(name: 'Pengguna', isAdmin: false);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, '/login', (r) => false);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: Text('Keluar', style: GoogleFonts.poppins()),

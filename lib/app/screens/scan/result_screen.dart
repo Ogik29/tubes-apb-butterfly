@@ -6,6 +6,7 @@ import '../../models/scan_result_model.dart';
 import '../../models/butterfly_model.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/toxicity_badge.dart';
+import '../../services/api_service.dart';
 import 'package:intl/intl.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -25,10 +26,12 @@ class _ResultScreenState extends State<ResultScreen>
   late Animation<double> _confidenceAnim;
   late Animation<double> _iconPulse;
   bool _isSaved = false;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
+    _isSaved = widget.result?.isSaved ?? false;
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -195,10 +198,15 @@ class _ResultScreenState extends State<ResultScreen>
         ),
         // Image or icon
         _result.imagePath.isNotEmpty
-            ? Image.file(
-                File(_result.imagePath),
-                fit: BoxFit.cover,
-              )
+            ? (_result.imagePath.startsWith('http')
+                ? Image.network(
+                    _result.imagePath,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    File(_result.imagePath),
+                    fit: BoxFit.cover,
+                  ))
             : Center(
                 child: AnimatedBuilder(
                   animation: _iconPulse,
@@ -366,10 +374,11 @@ class _ResultScreenState extends State<ResultScreen>
               Color barColor;
               if (confidence >= 0.8) {
                 barColor = AppColors.primary;
-              } else if (confidence >= 0.6)
+              } else if (confidence >= 0.6) {
                 barColor = AppColors.accent;
-              else
+              } else {
                 barColor = AppColors.danger;
+              }
 
               return Column(
                 children: [
@@ -535,25 +544,52 @@ class _ResultScreenState extends State<ResultScreen>
   }
 
   Widget _buildActions(BuildContext context) {
+    final canSave = _result.id != null && !_isSaved;
+
     return Column(
       children: [
         CustomButton(
           text: _isSaved ? 'Tersimpan ke Koleksi ✓' : 'Simpan ke Koleksi',
           icon: _isSaved ? Icons.check_rounded : Icons.save_rounded,
           color: _isSaved ? AppColors.primaryDark : null,
-          onPressed: () {
-            setState(() => _isSaved = true);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Hasil scan berhasil disimpan ke koleksi!',
-                  style: GoogleFonts.poppins(),
-                ),
-                backgroundColor: AppColors.primary,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
+          isLoading: _isSaving,
+          onPressed: canSave
+              ? () async {
+                  setState(() => _isSaving = true);
+                  try {
+                    await ApiService.saveScan(_result.id!);
+                    setState(() {
+                      _isSaved = true;
+                      _isSaving = false;
+                    });
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Hasil scan berhasil disimpan ke koleksi!',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: AppColors.primary,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    setState(() => _isSaving = false);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            e.toString().replaceAll('Exception: ', ''),
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: AppColors.danger,
+                        ),
+                      );
+                    }
+                  }
+                }
+              : null,
         ),
         const SizedBox(height: 12),
         CustomButton(

@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../models/butterfly_model.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../services/api_service.dart';
 
 class SpeciesFormScreen extends StatefulWidget {
   final ButterflyModel? butterfly;
@@ -67,50 +68,56 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
   void _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      await Future.delayed(const Duration(milliseconds: 1200));
-      if (mounted) {
-        setState(() => _isLoading = false);
-        final newButterfly = ButterflyModel(
-          id: widget.butterfly?.id ?? DateTime.now().millisecondsSinceEpoch,
-          name: _nameController.text.trim(),
-          scientificName: _scientificNameController.text.trim(),
-          isToxic: _isToxic,
-          description: _descriptionController.text.trim(),
-          habitat: _habitatController.text.trim().isEmpty
-              ? null
-              : _habitatController.text.trim(),
-          distribution: _distributionController.text.trim().isEmpty
-              ? null
-              : _distributionController.text.trim(),
-          wingSpan: _wingSpanController.text.trim().isEmpty
-              ? null
-              : _wingSpanController.text.trim(),
-          toxinType: _isToxic && _toxinTypeController.text.trim().isNotEmpty
-              ? _toxinTypeController.text.trim()
-              : null,
-          safetyAdvice:
-              _isToxic && _safetyAdviceController.text.trim().isNotEmpty
-                  ? _safetyAdviceController.text.trim()
-                  : null,
-          conservationStatus: _conservationStatusController.text.trim().isEmpty
-              ? null
-              : _conservationStatusController.text.trim(),
-          diet: _dietController.text.trim().isEmpty
-              ? null
-              : _dietController.text.trim(),
-        );
-        Navigator.pop(context, newButterfly);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditing
-                  ? 'Spesies berhasil diperbarui!'
-                  : 'Spesies baru berhasil ditambahkan!',
-              style: GoogleFonts.poppins(),
+
+      final payload = {
+        'name': _nameController.text.trim(),
+        'scientific_name': _scientificNameController.text.trim(),
+        'is_toxic': _isToxic,
+        'description': _descriptionController.text.trim(),
+        'habitat': _habitatController.text.trim().isEmpty ? null : _habitatController.text.trim(),
+        'distribution': _distributionController.text.trim().isEmpty ? null : _distributionController.text.trim(),
+        'wing_span': _wingSpanController.text.trim().isEmpty ? null : _wingSpanController.text.trim(),
+        'toxin_type': _isToxic && _toxinTypeController.text.trim().isNotEmpty ? _toxinTypeController.text.trim() : null,
+        'safety_advice': _isToxic && _safetyAdviceController.text.trim().isNotEmpty ? _safetyAdviceController.text.trim() : null,
+        'conservation_status': _conservationStatusController.text.trim().isEmpty ? null : _conservationStatusController.text.trim(),
+        'diet': _dietController.text.trim().isEmpty ? null : _dietController.text.trim(),
+      };
+
+      try {
+        if (_isEditing) {
+          await ApiService.updateButterfly(widget.butterfly!.id, payload);
+        } else {
+          await ApiService.addButterfly(payload);
+        }
+        
+        if (mounted) {
+          setState(() => _isLoading = false);
+          Navigator.pop(context, true); // return true to trigger refresh in admin panel list
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _isEditing
+                    ? 'Spesies berhasil diperbarui!'
+                    : 'Spesies baru berhasil ditambahkan!',
+                style: GoogleFonts.poppins(),
+              ),
+              backgroundColor: AppColors.primary,
             ),
-            backgroundColor: AppColors.primary,
-          ),
-        );
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                e.toString().replaceAll('Exception: ', ''),
+                style: GoogleFonts.poppins(),
+              ),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+        }
       }
     }
   }

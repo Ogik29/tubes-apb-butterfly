@@ -1,6 +1,6 @@
 {
-    "name": "tubes_apb_fe",
-    "short_name": "tubes_apb_fe",
+    "name": "Mothra App",
+    "short_name": "Mothra App",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

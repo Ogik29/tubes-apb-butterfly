@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../models/scan_result_model.dart';
-import '../../models/butterfly_model.dart';
 import '../../widgets/common/toxicity_badge.dart';
 import '../../../main.dart';
 import '../scan/scan_screen.dart';
 import '../history/history_screen.dart';
 import '../collection/collection_screen.dart';
 import '../admin/admin_panel_screen.dart';
+import '../../services/api_service.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -109,36 +109,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // ---------- HOME TAB ----------
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   final bool isAdmin;
   const _HomeTab({required this.isAdmin});
 
   @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  late Future<List<dynamic>> _dataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStats();
+  }
+
+  void _fetchStats() {
+    if (widget.isAdmin) {
+      _dataFuture = Future.wait([
+        ApiService.getAdminStats(),
+        Future.value(<ScanResultModel>[]),
+      ]);
+    } else {
+      _dataFuture = Future.wait([
+        ApiService.getStats(),
+        ApiService.getHistory(),
+      ]);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appState = AppState.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, appState),
-            const SizedBox(height: 24),
-            if (!isAdmin) _buildStatsRow(),
-            if (!isAdmin) const SizedBox(height: 24),
-            _buildQuickAccessGrid(context, isAdmin),
-            const SizedBox(height: 28),
-            if (!isAdmin) ...[
-              _buildSectionTitle('Scan Terakhir'),
-              const SizedBox(height: 12),
-              _buildRecentScans(context),
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          _fetchStats();
+        });
+      },
+      child: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context, appState),
+              const SizedBox(height: 24),
+              FutureBuilder<List<dynamic>>(
+                future: _dataFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 64.0),
+                        child: CircularProgressIndicator(color: AppColors.primary),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32.0),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 48),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Gagal mengambil data statistik.',
+                              style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final stats = snapshot.data![0] as Map<String, dynamic>;
+                  final history = snapshot.data![1] as List<ScanResultModel>;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!widget.isAdmin) _buildStatsRow(stats),
+                      if (!widget.isAdmin) const SizedBox(height: 24),
+                      _buildQuickAccessGrid(context, widget.isAdmin),
+                      const SizedBox(height: 28),
+                      if (!widget.isAdmin) ...[
+                        _buildSectionTitle('Scan Terakhir'),
+                        const SizedBox(height: 12),
+                        _buildRecentScans(context, history),
+                      ],
+                      if (widget.isAdmin) ...[
+                        _buildSectionTitle('Ringkasan Admin'),
+                        const SizedBox(height: 12),
+                        _buildAdminSummary(stats),
+                      ],
+                    ],
+                  );
+                },
+              ),
             ],
-            if (isAdmin) ...[
-              _buildSectionTitle('Ringkasan Admin'),
-              const SizedBox(height: 12),
-              _buildAdminSummary(),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -160,7 +234,7 @@ class _HomeTab extends StatelessWidget {
                 ),
               ),
               Text(
-                isAdmin
+                widget.isAdmin
                     ? 'Panel Admin Aktif'
                     : 'Selamat datang di Kupu-Kupu Asik',
                 style: GoogleFonts.poppins(
@@ -194,10 +268,14 @@ class _HomeTab extends StatelessWidget {
                             color: AppColors.textSecondary)),
                   ),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(ctx); // Tutup dialog
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, '/login', (route) => false);
+                      await ApiService.logout();
+                      if (context.mounted) {
+                        AppState.of(context)?.setUser(name: 'Pengguna', isAdmin: false);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/login', (route) => false);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.danger),
@@ -228,22 +306,13 @@ class _HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow() {
-    // Hitung data dinamis dari sample data
-    final totalScan = sampleScanHistory.length;
-    final safeButterflies =
-        sampleButterflies.where((b) => b.isCollected && !b.isToxic).length;
-    final toxicFound =
-        sampleButterflies.where((b) => b.isCollected && b.isToxic).length;
-    final collectedCount = sampleButterflies.where((b) => b.isCollected).length;
-    final totalCount = sampleButterflies.length;
-
-    // Rata-rata confidence dari semua scan yang tersimpan
-    final savedScans = sampleScanHistory.where((s) => s.isSaved).toList();
-    final avgConfidence = savedScans.isEmpty
-        ? 0.0
-        : savedScans.map((s) => s.confidence).reduce((a, b) => a + b) /
-            savedScans.length;
+  Widget _buildStatsRow(Map<String, dynamic> stats) {
+    final totalScan = stats['total_scans'] ?? 0;
+    final safeButterflies = stats['safe_butterflies'] ?? 0;
+    final toxicFound = stats['toxic_found'] ?? 0;
+    final collectedCount = stats['collected_count'] ?? 0;
+    final totalCount = stats['total_count'] ?? 0;
+    final avgConfidence = (stats['avg_confidence'] ?? 0.0).toDouble();
 
     return Column(
       children: [
@@ -260,7 +329,6 @@ class _HomeTab extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // Card rata-rata keyakinan berdasar koleksi user
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -451,8 +519,26 @@ class _HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentScans(BuildContext context) {
-    final recent = sampleScanHistory.take(3).toList();
+  Widget _buildRecentScans(BuildContext context, List<ScanResultModel> history) {
+    if (history.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Center(
+          child: Text(
+            'Belum ada riwayat scan.',
+            style: GoogleFonts.poppins(color: AppColors.textHint, fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    final recent = history.take(3).toList();
     return Column(
       children: recent.map((scan) => _buildScanItem(context, scan)).toList(),
     );
@@ -477,11 +563,27 @@ class _HomeTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: (scan.isToxic ? AppColors.danger : AppColors.safe).withOpacity(0.3),
+                ),
               ),
-              child: Icon(
-                Icons.flutter_dash,
-                color: scan.isToxic ? AppColors.danger : AppColors.primary,
-                size: 28,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: scan.imagePath.isNotEmpty
+                    ? Image.network(
+                        scan.imagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.flutter_dash,
+                          color: scan.isToxic ? AppColors.danger : AppColors.primary,
+                          size: 28,
+                        ),
+                      )
+                    : Icon(
+                        Icons.flutter_dash,
+                        color: scan.isToxic ? AppColors.danger : AppColors.primary,
+                        size: 28,
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -514,17 +616,21 @@ class _HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAdminSummary() {
+  Widget _buildAdminSummary(Map<String, dynamic> stats) {
+    final totalSpecies = stats['total_species'] ?? 0;
+    final totalScans = stats['total_scans'] ?? 0;
+    final activeUsers = stats['active_users'] ?? 0;
+
     return Row(
       children: [
-        _buildAdminStatCard('8', 'Spesies\nTerdaftar', Icons.bug_report_rounded,
+        _buildAdminStatCard('$totalSpecies', 'Spesies\nTerdaftar', Icons.bug_report_rounded,
             AppColors.primary),
         const SizedBox(width: 12),
-        _buildAdminStatCard('5', 'Scan\nTotal User', Icons.camera_alt_rounded,
+        _buildAdminStatCard('$totalScans', 'Scan\nTotal User', Icons.camera_alt_rounded,
             AppColors.secondary),
         const SizedBox(width: 12),
         _buildAdminStatCard(
-            '4', 'User\nAktif', Icons.people_rounded, AppColors.accent),
+            '$activeUsers', 'User\nAktif', Icons.people_rounded, AppColors.accent),
       ],
     );
   }
@@ -566,3 +672,4 @@ class _QuickItem {
   final String route;
   _QuickItem(this.label, this.icon, this.color, this.route);
 }
+

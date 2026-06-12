@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
-import '../../models/scan_result_model.dart';
+import '../../services/api_service.dart';
 import '../../widgets/common/custom_button.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -34,28 +33,25 @@ class _ScanScreenState extends State<ScanScreen> {
     if (_selectedImage == null) return;
     setState(() => _isAnalyzing = true);
 
-    // Simulate AI analysis delay
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (mounted) {
-      setState(() => _isAnalyzing = false);
-      // Generate mock result
-      final rand = Random();
-      final isToxic = rand.nextBool();
-      final confidence = 0.6 + rand.nextDouble() * 0.39;
-      final species = isToxic
-          ? ['Monarch Butterfly', 'Pipevine Swallowtail', 'Zebra Longwing'][rand.nextInt(3)]
-          : ['Blue Morpho', 'Swallowtail Butterfly', 'Painted Lady'][rand.nextInt(3)];
-
-      final result = ScanResultModel(
-        imagePath: _selectedImage!.path,
-        predictedSpecies: species,
-        isToxic: isToxic,
-        confidence: confidence,
-        scannedAt: DateTime.now(),
-      );
-
-      Navigator.pushNamed(context, '/result', arguments: result);
+    try {
+      final result = await ApiService.scanImage(_selectedImage!);
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+        Navigator.pushNamed(context, '/result', arguments: result);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().replaceAll('Exception: ', ''),
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
 
