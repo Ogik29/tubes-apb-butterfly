@@ -41,6 +41,7 @@ class ScanController extends Controller
             'is_toxic' => $isToxic,
             'confidence' => (float) (rand(6000, 9900) / 10000), // 0.6000 to 0.9900
             'is_saved' => false,
+            'scanned_at' => now(),
         ]);
 
         return response()->json([

@@ -24,7 +24,7 @@ class ScanResultResource extends JsonResource
             'confidence'        => $this->confidence,
             'confidence_percent'=> $this->confidence_percent, // accessor "94.7%"
             'is_saved'          => $this->is_saved,
-            'scanned_at'        => $this->scanned_at->toIso8601String(),
+            'scanned_at'        => $this->scanned_at ? $this->scanned_at->toIso8601String() : now()->toIso8601String(),
             // Relasi butterfly (jika loaded)
             'butterfly'         => $this->whenLoaded('butterfly', function () {
                 return new ButterflyResource($this->butterfly);

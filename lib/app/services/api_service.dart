@@ -12,7 +12,7 @@ class ApiService {
     if (kIsWeb) return 'http://localhost:8000';
 
     // IP laptop untuk koneksi dari device fisik eksternal
-    const String laptopIp = '192.168.18.96';
+    const String laptopIp = '192.168.100.13';
 
     try {
       return 'http://$laptopIp:8000';
