@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
 import '../../services/api_service.dart';
+import '../../services/notification_service.dart';
 import '../../widgets/common/custom_button.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -36,6 +37,13 @@ class _ScanScreenState extends State<ScanScreen> {
 
     try {
       final result = await ApiService.scanImage(_selectedImage!);
+
+      // Kirim notifikasi lokal setelah sukses diidentifikasi
+      await NotificationService.showNotification(
+        'Pemindaian Berhasil! 🦋',
+        'Spesies terdeteksi: ${result.predictedSpecies} (${result.isToxic ? "Beracun ⚠️" : "Aman ✅"})',
+      );
+
       if (mounted) {
         setState(() => _isAnalyzing = false);
         Navigator.pushNamed(context, '/result', arguments: result);

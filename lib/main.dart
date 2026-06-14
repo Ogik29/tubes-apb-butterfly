@@ -5,9 +5,11 @@ import 'app/theme/app_theme.dart';
 import 'app/theme/app_colors.dart';
 import 'app/routes/app_routes.dart';
 import 'app/services/api_service.dart';
+import 'app/services/notification_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
