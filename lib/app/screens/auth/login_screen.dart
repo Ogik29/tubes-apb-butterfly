@@ -24,7 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Email dan password wajib diisi', style: GoogleFonts.poppins()),
+          content: Text('Email dan password wajib diisi',
+              style: GoogleFonts.poppins()),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -36,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final result = await ApiService.login(email, password);
       final user = result['user'];
-      
+
       if (mounted) {
         AppState.of(context)?.setUser(
           name: user.name,
@@ -48,7 +49,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', ''), style: GoogleFonts.poppins()),
+            content: Text(e.toString().replaceAll('Exception: ', ''),
+                style: GoogleFonts.poppins()),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -97,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Monggo',
+                  'Welcome :3',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(color: AppColors.textSecondary),
                 ),

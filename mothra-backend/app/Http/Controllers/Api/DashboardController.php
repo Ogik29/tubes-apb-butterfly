@@ -14,9 +14,9 @@ class DashboardController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $totalScan = $user->scanResults()->count();
-        
+
         $collectedSpecies = $user->collectedButterflies()->get();
         $safeButterflies = $collectedSpecies->where('is_toxic', false)->count();
         $toxicFound = $collectedSpecies->where('is_toxic', true)->count();
@@ -29,7 +29,7 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'total_scan' => $totalScan,
+                'total_scans' => $totalScan,
                 'safe_butterflies' => $safeButterflies,
                 'toxic_found' => $toxicFound,
                 'collected_count' => $collectedCount,

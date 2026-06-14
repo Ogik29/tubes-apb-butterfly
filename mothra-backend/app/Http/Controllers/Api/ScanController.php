@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class ScanController extends Controller
 {
-    public function scan(Request $request): JsonResponse
+    public function scan(Request $request): JsonResponse // ambil prediksi model di predict.py
     {
         $request->validate([
             'image' => 'required|image|max:4096',
@@ -19,18 +19,63 @@ class ScanController extends Controller
 
         $imagePath = $request->file('image')->store('scans', 'public');
 
-        // TODO: Nanti integrasikan dengan model AI Python.
-        // Simulasi hasil CNN untuk sementara (seperti di frontend Flutter)
-        $butterflies = Butterfly::inRandomOrder()->take(1)->get();
-        $isToxic = (bool) rand(0, 1);
-        $predictedSpecies = 'Unknown Species';
-        $butterflyId = null;
+        $absoluteImagePath = storage_path('app/public/' . $imagePath);
+        $pythonScript = base_path('ml/predict.py');
 
-        if ($butterflies->count() > 0) {
-            $butterfly = $butterflies->first();
-            $predictedSpecies = $butterfly->name;
-            $isToxic = $butterfly->is_toxic;
+        // Windows biasanya bisa pakai "python".
+        // Kalau pakai venv Windows, bisa ganti ke: base_path('venv/Scripts/python.exe')
+        // Kalau Mac/Linux venv: base_path('venv/bin/python')
+        $pythonBinary = env('PYTHON_BINARY', 'python');
+
+        // Jika path tidak berupa perintah global ("python"/"python3") dan file-nya ada di dalam base_path(),
+        // ubah menjadi absolute path agar eksekusi shell lebih terjamin.
+        if ($pythonBinary !== 'python' && $pythonBinary !== 'python3' && file_exists(base_path($pythonBinary))) {
+            $pythonBinary = base_path($pythonBinary);
+        }
+
+        $command = escapeshellarg($pythonBinary)
+            . ' '
+            . escapeshellarg($pythonScript)
+            . ' '
+            . escapeshellarg($absoluteImagePath);
+
+        $output = shell_exec($command . ' 2>&1');
+
+        // Cari posisi awal JSON '{' dan akhir '}' untuk memotong output warning/info TensorFlow
+        $startPos = strpos($output, '{');
+        $endPos = strrpos($output, '}');
+        if ($startPos !== false && $endPos !== false) {
+            $jsonString = substr($output, $startPos, $endPos - $startPos + 1);
+            $prediction = json_decode($jsonString, true);
+        } else {
+            $prediction = null;
+        }
+
+        if (!$prediction || !isset($prediction['success']) || $prediction['success'] !== true) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Prediksi model gagal',
+                'debug_output' => $output,
+            ], 500);
+        }
+
+        $predictedSpecies = $prediction['species'];
+        $confidence = $prediction['confidence'] ?? 0;
+        $isToxicFromModel = $prediction['is_toxic'] ?? false;
+
+        $butterfly = Butterfly::whereRaw('LOWER(name) = ?', [
+            strtolower(str_replace('_', ' ', $predictedSpecies))
+        ])->first();
+
+        $butterflyId = null;
+        $isToxic = $isToxicFromModel;
+
+        if ($butterfly) {
             $butterflyId = $butterfly->id;
+
+            // Lebih aman mengikuti data database, karena field is_toxic sudah diatur di seeder.
+            $isToxic = $butterfly->is_toxic;
+            $predictedSpecies = $butterfly->name;
         }
 
         $scanResult = ScanResult::create([
@@ -39,7 +84,7 @@ class ScanController extends Controller
             'image_path' => $imagePath,
             'predicted_species' => $predictedSpecies,
             'is_toxic' => $isToxic,
-            'confidence' => (float) (rand(6000, 9900) / 10000), // 0.6000 to 0.9900
+            'confidence' => $confidence,
             'is_saved' => false,
             'scanned_at' => now(),
         ]);
@@ -48,6 +93,7 @@ class ScanController extends Controller
             'success' => true,
             'message' => 'Scan berhasil',
             'data' => new ScanResultResource($scanResult),
+            'model_output' => $prediction,
         ]);
     }
 

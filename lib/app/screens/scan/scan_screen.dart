@@ -98,126 +98,125 @@ class _ScanScreenState extends State<ScanScreen> {
 
   Widget _buildImageArea() {
     return Container(
-        width: double.infinity,
-        height: 280,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: _selectedImage != null
-                ? AppColors.primary.withOpacity(0.6)
-                : AppColors.border,
-            width: 2,
-          ),
-          boxShadow: _selectedImage != null
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  )
-                ]
-              : null,
+      width: double.infinity,
+      height: 280,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: _selectedImage != null
+              ? AppColors.primary.withOpacity(0.6)
+              : AppColors.border,
+          width: 2,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: _selectedImage != null
-              ? Stack(
-                  children: [
-                    Image.file(
-                      _selectedImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                    if (_isAnalyzing)
-                      Container(
-                        color: Colors.black.withOpacity(0.6),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const CircularProgressIndicator(
-                                color: AppColors.primary,
-                                strokeWidth: 3,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Menganalisis gambar...',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                'Model CNN sedang bekerja',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    // Remove button
-                    if (!_isAnalyzing)
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedImage = null),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.close_rounded,
-                                color: Colors.white, size: 18),
-                          ),
-                        ),
-                      ),
-                  ],
+        boxShadow: _selectedImage != null
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.2),
+                  blurRadius: 20,
+                  spreadRadius: 2,
                 )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: _selectedImage != null
+            ? Stack(
+                children: [
+                  Image.file(
+                    _selectedImage!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                  if (_isAnalyzing)
                     Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add_photo_alternate_rounded,
-                        size: 52,
-                        color: AppColors.primary,
+                      color: Colors.black.withOpacity(0.6),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CircularProgressIndicator(
+                              color: AppColors.primary,
+                              strokeWidth: 3,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Menganalisis gambar...',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              'Model CNN sedang bekerja',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Pilih atau ambil foto kupu-kupu',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
+                  // Remove button
+                  if (!_isAnalyzing)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedImage = null),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close_rounded,
+                              color: Colors.white, size: 18),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Kualitas gambar mempengaruhi akurasi',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: AppColors.textHint,
-                      ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
-        ),
-      );
+                    child: const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      size: 52,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Pilih atau ambil foto kupu-kupu',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kualitas gambar mempengaruhi akurasi',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
   }
 
   Widget _buildInstruction() {
@@ -302,7 +301,7 @@ class _ScanScreenState extends State<ScanScreen> {
     return Column(
       children: [
         CustomButton(
-          text: _isAnalyzing ? 'Menganalisis...' : 'Analisis dengan CNN',
+          text: _isAnalyzing ? 'Menganalisis...' : 'Analisis Gambar',
           icon: Icons.biotech_rounded,
           isLoading: _isAnalyzing,
           onPressed: _analyzeImage,
@@ -312,9 +311,8 @@ class _ScanScreenState extends State<ScanScreen> {
           text: 'Ganti Gambar',
           icon: Icons.refresh_rounded,
           isOutlined: true,
-          onPressed: _isAnalyzing
-              ? null
-              : () => setState(() => _selectedImage = null),
+          onPressed:
+              _isAnalyzing ? null : () => setState(() => _selectedImage = null),
         ),
       ],
     );
