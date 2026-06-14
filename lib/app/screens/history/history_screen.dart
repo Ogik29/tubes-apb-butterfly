@@ -55,7 +55,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Riwayat berhasil dihapus', style: GoogleFonts.poppins()),
+            content:
+                Text('Riwayat berhasil dihapus', style: GoogleFonts.poppins()),
             backgroundColor: AppColors.primary,
           ),
         );
@@ -64,7 +65,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menghapus riwayat: $e', style: GoogleFonts.poppins()),
+            content: Text('Gagal menghapus riwayat: $e',
+                style: GoogleFonts.poppins()),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -102,7 +104,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list_rounded, color: AppColors.textSecondary),
+            icon: const Icon(Icons.filter_list_rounded,
+                color: AppColors.textSecondary),
             onPressed: _showFilterSheet,
           ),
         ],
@@ -115,7 +118,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
                     )
                   : _errorMessage != null
                       ? Center(
@@ -124,17 +128,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 48),
+                                const Icon(Icons.error_outline_rounded,
+                                    color: AppColors.danger, size: 48),
                                 const SizedBox(height: 12),
                                 Text(
                                   _errorMessage!,
-                                  style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                                  style: GoogleFonts.poppins(
+                                      color: AppColors.textSecondary),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton(
                                   onPressed: _fetchHistory,
-                                  child: Text('Coba Lagi', style: GoogleFonts.poppins()),
+                                  child: Text('Coba Lagi',
+                                      style: GoogleFonts.poppins()),
                                 ),
                               ],
                             ),
@@ -152,8 +159,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               : ListView.builder(
                                   padding: const EdgeInsets.all(16),
                                   itemCount: _filteredList.length,
-                                  itemBuilder: (ctx, i) =>
-                                      _buildHistoryItem(ctx, _filteredList[i], i),
+                                  itemBuilder: (ctx, i) => _buildHistoryItem(
+                                      ctx, _filteredList[i], i),
                                 ),
                         ),
             ),
@@ -183,17 +190,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
               onTap: () => setState(() => _filter = f.$1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary.withOpacity(0.2)
                       : AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.border,
+                    color: isSelected ? AppColors.primary : AppColors.border,
                   ),
                 ),
                 child: Row(
@@ -271,7 +276,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildHistoryItem(BuildContext context, ScanResultModel scan, int index) {
+  Widget _buildHistoryItem(
+      BuildContext context, ScanResultModel scan, int index) {
     final isToxic = scan.isToxic;
     final color = isToxic ? AppColors.danger : AppColors.safe;
     return Dismissible(
@@ -292,16 +298,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
           builder: (BuildContext context) {
             return AlertDialog(
               backgroundColor: AppColors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text("Hapus Riwayat", style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-              content: Text("Apakah Anda yakin ingin menghapus hasil scan ini?", style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Text("Hapus Riwayat",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+              content: Text("Apakah Anda yakin ingin menghapus hasil scan ini?",
+                  style: GoogleFonts.poppins(
+                      fontSize: 13, color: AppColors.textSecondary)),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: Text("Batal", style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                  child: Text("Batal",
+                      style:
+                          GoogleFonts.poppins(color: AppColors.textSecondary)),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.danger),
                   onPressed: () => Navigator.of(context).pop(true),
                   child: Text("Hapus", style: GoogleFonts.poppins()),
                 ),
@@ -346,6 +359,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ? Image.network(
                                 scan.imagePath,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.broken_image_rounded,
+                                    color: color,
+                                    size: 36,
+                                  );
+                                },
                               )
                             : Image.file(
                                 File(scan.imagePath),
@@ -371,7 +391,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat('dd MMM yyyy • HH:mm').format(scan.scannedAt),
+                        DateFormat('dd MMM yyyy • HH:mm')
+                            .format(scan.scannedAt),
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: AppColors.textSecondary,

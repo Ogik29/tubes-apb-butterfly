@@ -35,13 +35,34 @@ class SpeciesDetailScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Container(
-                    color: AppColors.surfaceLight,
-                    child: Icon(Icons.flutter_dash, size: 120,
-                        color: statusColor.withOpacity(0.5)),
-                  ),
+                  butterfly.imageUrl != null && butterfly.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          butterfly.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppColors.surfaceLight,
+                              child: Icon(
+                                Icons.broken_image_rounded,
+                                size: 120,
+                                color: statusColor.withOpacity(0.5),
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          color: AppColors.surfaceLight,
+                          child: Icon(
+                            Icons.flutter_dash,
+                            size: 120,
+                            color: statusColor.withOpacity(0.5),
+                          ),
+                        ),
                   Positioned(
-                    bottom: 0, left: 0, right: 0, height: 100,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 100,
                     child: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
@@ -54,16 +75,19 @@ class SpeciesDetailScreen extends StatelessWidget {
                   ),
                   if (butterfly.isCollected)
                     Positioned(
-                      top: 56, right: 20,
+                      top: 56,
+                      right: 20,
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.primary.withOpacity(0.9),
-                          boxShadow: [BoxShadow(
-                            color: AppColors.primary.withOpacity(0.5),
-                            blurRadius: 12,
-                          )],
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.5),
+                              blurRadius: 12,
+                            )
+                          ],
                         ),
                         child: const Icon(Icons.star_rounded,
                             color: Colors.white, size: 20),
@@ -215,8 +239,8 @@ class SpeciesDetailScreen extends StatelessWidget {
                   _buildSectionTitle('Informasi Spesies'),
                   const SizedBox(height: 8),
                   _buildInfoItem('Nama Ilmiah', butterfly.scientificName),
-                  _buildInfoItem(
-                      'Status Racun', isToxic ? '⚠️ Beracun' : '✅ Tidak Beracun'),
+                  _buildInfoItem('Status Racun',
+                      isToxic ? '⚠️ Beracun' : '✅ Tidak Beracun'),
                   if (butterfly.habitat != null)
                     _buildInfoItem('Habitat', butterfly.habitat!),
                   if (butterfly.distribution != null)
@@ -232,7 +256,9 @@ class SpeciesDetailScreen extends StatelessWidget {
                         'Status Konservasi', butterfly.conservationStatus!),
                   _buildInfoItem(
                     'Status Koleksi',
-                    butterfly.isCollected ? '⭐ Sudah ditemukan' : '🔒 Belum ditemukan',
+                    butterfly.isCollected
+                        ? '⭐ Sudah ditemukan'
+                        : '🔒 Belum ditemukan',
                   ),
                   const SizedBox(height: 20),
                 ],

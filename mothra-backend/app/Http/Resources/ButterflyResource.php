@@ -22,15 +22,19 @@ class ButterflyResource extends JsonResource
                 ->exists();
         }
 
+        // Jika data berasal dari halaman koleksi, pakai gambar dari scan_results.
+        // Kalau tidak ada, fallback ke butterflies.image_url.
+        $displayImagePath = $this->collection_image_path ?? $this->image_url;
+
         return [
             'id'                  => $this->id,
             'name'                => $this->name,
             'scientific_name'     => $this->scientific_name,
             'is_toxic'            => $this->is_toxic,
             'description'         => $this->description,
-            'image_url'           => $this->image_url
-                                        ? asset('storage/' . $this->image_url)
-                                        : null,
+            'image_url'           => $displayImagePath
+                ? request()->getSchemeAndHttpHost() . '/storage/' . ltrim($displayImagePath, '/')
+                : null,
             'is_collected'        => $isCollected,
             'habitat'             => $this->habitat,
             'distribution'        => $this->distribution,

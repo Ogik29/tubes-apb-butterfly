@@ -202,6 +202,15 @@ class _ResultScreenState extends State<ResultScreen>
                 ? Image.network(
                     _result.imagePath,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Icon(
+                          Icons.broken_image_rounded,
+                          size: 64,
+                          color: statusColor,
+                        ),
+                      );
+                    },
                   )
                 : Image.file(
                     File(_result.imagePath),

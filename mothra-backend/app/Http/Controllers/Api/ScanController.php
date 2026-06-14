@@ -111,6 +111,16 @@ class ScanController extends Controller
             $request->user()->collectedButterflies()->syncWithoutDetaching([
                 $scanResult->butterfly_id => ['first_scanned_at' => now()]
             ]);
+
+            // Simpan gambar hasil scan ke data spesies,
+            // supaya muncul di halaman Koleksi dan Detail Spesies.
+            // $butterfly = $scanResult->butterfly;
+
+            // if ($butterfly && $scanResult->image_path) {
+            //     $butterfly->update([
+            //         'image_url' => $scanResult->image_path,
+            //     ]);
+            // }
         }
 
         return response()->json([
