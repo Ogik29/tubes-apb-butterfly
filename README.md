@@ -19,7 +19,7 @@ Mothra App adalah proyek monorepo aplikasi seluler (Flutter) yang diintegrasikan
 Pastikan komputer Anda sudah terinstal perlengkapan berikut:
 * **Flutter SDK** (Versi >= 3.5.0)
 * **PHP** (Versi >= 8.2) & **Composer**
-* **DBMS** (PostgreSQL / MySQL)
+* **DBMS** (PostgreSQL)
 * **Python** (Versi >= 3.10)
 
 ---
