@@ -62,6 +62,7 @@ class ScanController extends Controller
         $predictedSpecies = $prediction['species'];
         $confidence = $prediction['confidence'] ?? 0;
         $isToxicFromModel = $prediction['is_toxic'] ?? false;
+        $toxicityConfidence = $prediction['toxicity_score'] ?? 0.0;
 
         $butterfly = Butterfly::whereRaw('LOWER(name) = ?', [
             strtolower(str_replace('_', ' ', $predictedSpecies))
@@ -85,6 +86,7 @@ class ScanController extends Controller
             'predicted_species' => $predictedSpecies,
             'is_toxic' => $isToxic,
             'confidence' => $confidence,
+            'toxicity_confidence' => $toxicityConfidence,
             'is_saved' => false,
             'scanned_at' => now(),
         ]);

@@ -6,6 +6,7 @@ class ScanResultModel {
   final String predictedSpecies;
   final bool isToxic;
   final double confidence; // 0.0 - 1.0
+  final double toxicityConfidence; // 0.0 - 1.0
   final DateTime scannedAt;
   final bool isSaved;
   final int? butterflyId;
@@ -16,6 +17,7 @@ class ScanResultModel {
     required this.predictedSpecies,
     required this.isToxic,
     required this.confidence,
+    required this.toxicityConfidence,
     required this.scannedAt,
     this.isSaved = false,
     this.butterflyId,
@@ -23,6 +25,11 @@ class ScanResultModel {
 
   String get confidencePercent =>
       '${(confidence * 100).toStringAsFixed(1)}%';
+
+  String get toxicityConfidencePercent {
+    final double score = isToxic ? toxicityConfidence : (1.0 - toxicityConfidence);
+    return '${(score * 100).toStringAsFixed(1)}%';
+  }
 
   Color get statusColor => isToxic ? const Color(0xFFFF4757) : const Color(0xFF76C893);
   String get statusText => isToxic ? 'BERACUN' : 'TIDAK BERACUN';
@@ -34,6 +41,7 @@ class ScanResultModel {
       predictedSpecies: json['predicted_species'] ?? '',
       isToxic: json['is_toxic'] ?? false,
       confidence: (json['confidence'] ?? 0.0).toDouble(),
+      toxicityConfidence: (json['toxicity_confidence'] ?? 0.0).toDouble(),
       scannedAt: DateTime.parse(json['scanned_at']),
       isSaved: json['is_saved'] ?? false,
       butterflyId: json['butterfly_id'],
@@ -47,6 +55,7 @@ class ScanResultModel {
       'predicted_species': predictedSpecies,
       'is_toxic': isToxic,
       'confidence': confidence,
+      'toxicity_confidence': toxicityConfidence,
       'scanned_at': scannedAt.toIso8601String(),
       'is_saved': isSaved,
       'butterfly_id': butterflyId,
@@ -62,6 +71,7 @@ final List<ScanResultModel> sampleScanHistory = [
     predictedSpecies: 'Monarch Butterfly',
     isToxic: true,
     confidence: 0.947,
+    toxicityConfidence: 0.965,
     scannedAt: DateTime.now().subtract(const Duration(hours: 2)),
     isSaved: true,
     butterflyId: 1,
@@ -72,6 +82,7 @@ final List<ScanResultModel> sampleScanHistory = [
     predictedSpecies: 'Blue Morpho',
     isToxic: false,
     confidence: 0.891,
+    toxicityConfidence: 0.045, // high confidence of NOT being toxic (1.0 - 0.045 = 95.5%)
     scannedAt: DateTime.now().subtract(const Duration(days: 1)),
     isSaved: true,
     butterflyId: 4,
@@ -82,6 +93,7 @@ final List<ScanResultModel> sampleScanHistory = [
     predictedSpecies: 'Swallowtail Butterfly',
     isToxic: false,
     confidence: 0.763,
+    toxicityConfidence: 0.125, // 87.5% confidence of NOT being toxic
     scannedAt: DateTime.now().subtract(const Duration(days: 2)),
     isSaved: false,
     butterflyId: 2,
@@ -92,6 +104,7 @@ final List<ScanResultModel> sampleScanHistory = [
     predictedSpecies: 'Painted Lady',
     isToxic: false,
     confidence: 0.925,
+    toxicityConfidence: 0.082, // 91.8% confidence of NOT being toxic
     scannedAt: DateTime.now().subtract(const Duration(days: 3)),
     isSaved: true,
     butterflyId: 8,
@@ -102,6 +115,7 @@ final List<ScanResultModel> sampleScanHistory = [
     predictedSpecies: 'Unknown Species',
     isToxic: false,
     confidence: 0.412,
+    toxicityConfidence: 0.354, // 64.6% confidence of NOT being toxic
     scannedAt: DateTime.now().subtract(const Duration(days: 5)),
     isSaved: false,
     butterflyId: null,

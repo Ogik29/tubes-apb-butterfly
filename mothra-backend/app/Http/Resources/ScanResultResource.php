@@ -24,6 +24,7 @@ class ScanResultResource extends JsonResource
             'is_toxic'          => $this->is_toxic,
             'confidence'        => $this->confidence,
             'confidence_percent' => $this->confidence_percent, // accessor "94.7%"
+            'toxicity_confidence' => $this->toxicity_confidence,
             'is_saved'          => $this->is_saved,
             'scanned_at'        => $this->scanned_at ? $this->scanned_at->toIso8601String() : now()->toIso8601String(),
             // Relasi butterfly (jika loaded)

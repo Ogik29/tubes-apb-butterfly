@@ -142,43 +142,7 @@ class _SpeciesFormScreenState extends State<SpeciesFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image placeholder
-                Center(
-                  child: GestureDetector(
-                    onTap: () {}, // TODO: image picker
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: AppColors.primary.withOpacity(0.4),
-                            width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.15),
-                            blurRadius: 16,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.add_photo_alternate_rounded,
-                              size: 36, color: AppColors.primary),
-                          const SizedBox(height: 4),
-                          Text('Upload\nGambar',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  color: AppColors.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 28),
+
                 // Toxic toggle
                 Container(
                   padding: const EdgeInsets.all(16),

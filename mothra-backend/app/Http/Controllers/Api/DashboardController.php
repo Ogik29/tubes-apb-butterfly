@@ -24,7 +24,13 @@ class DashboardController extends Controller
         $totalCount = Butterfly::count();
 
         $savedScans = $user->scanResults()->where('is_saved', true)->get();
+
+        // Rata-rata keyakinan spesies mencakup semua spesies (beracun & aman)
         $avgConfidence = $savedScans->isEmpty() ? 0 : $savedScans->avg('confidence');
+
+        // Rata-rata keyakinan status racun hanya mencakup kupu-kupu yang beracun saja
+        $toxicSavedScans = $savedScans->where('is_toxic', true);
+        $avgToxicityConfidence = $toxicSavedScans->isEmpty() ? 0 : $toxicSavedScans->avg('toxicity_confidence');
 
         return response()->json([
             'success' => true,
@@ -35,6 +41,7 @@ class DashboardController extends Controller
                 'collected_count' => $collectedCount,
                 'total_count' => $totalCount,
                 'avg_confidence' => (float) $avgConfidence,
+                'avg_toxicity_confidence' => (float) $avgToxicityConfidence,
             ]
         ]);
     }

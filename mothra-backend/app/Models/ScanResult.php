@@ -17,15 +17,17 @@ class ScanResult extends Model
         'predicted_species',
         'is_toxic',
         'confidence',
+        'toxicity_confidence',
         'is_saved',
         'scanned_at',
     ];
 
     protected $casts = [
-        'is_toxic'   => 'boolean',
-        'is_saved'   => 'boolean',
-        'confidence' => 'float',
-        'scanned_at' => 'datetime',
+        'is_toxic'            => 'boolean',
+        'is_saved'            => 'boolean',
+        'confidence'          => 'float',
+        'toxicity_confidence' => 'float',
+        'scanned_at'          => 'datetime',
     ];
 
     /**

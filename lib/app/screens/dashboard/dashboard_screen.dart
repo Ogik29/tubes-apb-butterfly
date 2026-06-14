@@ -313,6 +313,7 @@ class _HomeTabState extends State<_HomeTab> {
     final collectedCount = stats['collected_count'] ?? 0;
     final totalCount = stats['total_count'] ?? 0;
     final avgConfidence = (stats['avg_confidence'] ?? 0.0).toDouble();
+    final avgToxicityConfidence = (stats['avg_toxicity_confidence'] ?? 0.0).toDouble();
 
     return Column(
       children: [
@@ -386,6 +387,50 @@ class _HomeTabState extends State<_HomeTab> {
                         fontSize: 11, color: AppColors.textHint),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.health_and_safety_rounded,
+                    color: AppColors.secondary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Rata-rata Keyakinan Status Racun',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, color: AppColors.textSecondary, height: 1.2),
+                    ),
+                    Text(
+                      '${(avgToxicityConfidence * 100).toStringAsFixed(1)}%',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

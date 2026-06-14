@@ -24,6 +24,7 @@ class _ResultScreenState extends State<ResultScreen>
   late Animation<double> _fadeIn;
   late Animation<Offset> _slideUp;
   late Animation<double> _confidenceAnim;
+  late Animation<double> _toxicityConfidenceAnim;
   late Animation<double> _iconPulse;
   bool _isSaved = false;
   bool _isSaving = false;
@@ -55,6 +56,16 @@ class _ResultScreenState extends State<ResultScreen>
       parent: _entranceController,
       curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
     ));
+    final double targetToxConf = _result.isToxic
+        ? _result.toxicityConfidence
+        : (1.0 - _result.toxicityConfidence);
+    _toxicityConfidenceAnim = Tween<double>(
+      begin: 0,
+      end: targetToxConf,
+    ).animate(CurvedAnimation(
+      parent: _entranceController,
+      curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+    ));
     _iconPulse = Tween<double>(begin: 0.92, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -76,6 +87,7 @@ class _ResultScreenState extends State<ResultScreen>
         predictedSpecies: 'Monarch Butterfly',
         isToxic: true,
         confidence: 0.947,
+        toxicityConfidence: 0.965,
         scannedAt: DateTime.now(),
       );
 
@@ -116,20 +128,6 @@ class _ResultScreenState extends State<ResultScreen>
               ),
               onPressed: () => Navigator.pop(context),
             ),
-            actions: [
-              IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Colors.black45,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.share_rounded,
-                      size: 16, color: Colors.white),
-                ),
-                onPressed: () {},
-              ),
-            ],
             flexibleSpace: FlexibleSpaceBar(
               background: _buildHeroImage(statusColor, statusGradient, isToxic),
             ),
@@ -367,15 +365,16 @@ class _ResultScreenState extends State<ResultScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Species Confidence
           Text(
-            'Tingkat Keyakinan Model',
+            'Tingkat Keyakinan Spesies',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           AnimatedBuilder(
             animation: _confidenceAnim,
             builder: (context, child) {
@@ -397,14 +396,14 @@ class _ResultScreenState extends State<ResultScreen>
                       Text(
                         '${(confidence * 100).toStringAsFixed(1)}%',
                         style: GoogleFonts.poppins(
-                          fontSize: 32,
+                          fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: barColor,
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: barColor.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
@@ -416,7 +415,7 @@ class _ResultScreenState extends State<ResultScreen>
                                   ? 'Cukup Yakin'
                                   : 'Kurang Yakin',
                           style: GoogleFonts.poppins(
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: barColor,
                           ),
@@ -424,14 +423,85 @@ class _ResultScreenState extends State<ResultScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
                       value: confidence,
                       backgroundColor: AppColors.surfaceLight,
                       valueColor: AlwaysStoppedAnimation<Color>(barColor),
-                      minHeight: 10,
+                      minHeight: 8,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: AppColors.border, height: 1),
+          ),
+          // 2. Toxicity Confidence
+          Text(
+            _result.isToxic
+                ? 'Tingkat Keyakinan Status Beracun'
+                : 'Tingkat Keyakinan Status Aman (Tidak Beracun)',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          AnimatedBuilder(
+            animation: _toxicityConfidenceAnim,
+            builder: (context, child) {
+              final confidence = _toxicityConfidenceAnim.value;
+              Color barColor = _result.isToxic ? AppColors.danger : AppColors.safe;
+
+              return Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${(confidence * 100).toStringAsFixed(1)}%',
+                        style: GoogleFonts.poppins(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: barColor,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: barColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          confidence >= 0.8
+                              ? 'Sangat Yakin'
+                              : confidence >= 0.6
+                                  ? 'Cukup Yakin'
+                                  : 'Kurang Yakin',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: barColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: confidence,
+                      backgroundColor: AppColors.surfaceLight,
+                      valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                      minHeight: 8,
                     ),
                   ),
                 ],
