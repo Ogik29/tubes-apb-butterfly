@@ -104,6 +104,14 @@ class ScanController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Setel semua scan lain dari spesies ini menjadi unsaved
+        if ($scanResult->butterfly_id) {
+            ScanResult::where('user_id', $request->user()->id)
+                ->where('butterfly_id', $scanResult->butterfly_id)
+                ->where('id', '!=', $scanResult->id)
+                ->update(['is_saved' => false]);
+        }
+
         $scanResult->update(['is_saved' => true]);
 
         // Jika berhasil diidentifikasi, tambahkan ke koleksi
@@ -111,16 +119,6 @@ class ScanController extends Controller
             $request->user()->collectedButterflies()->syncWithoutDetaching([
                 $scanResult->butterfly_id => ['first_scanned_at' => now()]
             ]);
-
-            // Simpan gambar hasil scan ke data spesies,
-            // supaya muncul di halaman Koleksi dan Detail Spesies.
-            // $butterfly = $scanResult->butterfly;
-
-            // if ($butterfly && $scanResult->image_path) {
-            //     $butterfly->update([
-            //         'image_url' => $scanResult->image_path,
-            //     ]);
-            // }
         }
 
         return response()->json([

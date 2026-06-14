@@ -44,7 +44,35 @@ class HistoryController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $butterflyId = $scanResult->butterfly_id;
+        $wasSaved = $scanResult->is_saved;
+
         $scanResult->delete();
+
+        if ($butterflyId) {
+            // Jika yang dihapus adalah scan yang disimpan, jadikan scan lain dari spesies ini sebagai saved
+            if ($wasSaved) {
+                $nextScan = ScanResult::where('user_id', $request->user()->id)
+                    ->where('butterfly_id', $butterflyId)
+                    ->latest('scanned_at')
+                    ->first();
+
+                if ($nextScan) {
+                    $nextScan->update(['is_saved' => true]);
+                } else {
+                    // Jika tidak ada scan lain untuk spesies ini, hapus dari koleksi
+                    $request->user()->collectedButterflies()->detach($butterflyId);
+                }
+            } else {
+                // Jika tidak ada scan sama sekali (baik saved maupun unsaved) untuk spesies ini, hapus dari koleksi
+                $hasAny = ScanResult::where('user_id', $request->user()->id)
+                    ->where('butterfly_id', $butterflyId)
+                    ->exists();
+                if (!$hasAny) {
+                    $request->user()->collectedButterflies()->detach($butterflyId);
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,

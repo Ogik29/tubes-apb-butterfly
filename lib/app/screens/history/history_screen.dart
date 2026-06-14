@@ -430,11 +430,46 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                 ),
               ),
-              // Arrow
-              const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: Icon(Icons.chevron_right_rounded,
-                    color: AppColors.textHint, size: 20),
+              // Tombol Hapus Riwayat
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      color: AppColors.danger, size: 20),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: AppColors.surface,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          title: Text("Hapus Riwayat",
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                          content: Text("Apakah Anda yakin ingin menghapus hasil scan ini?",
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13, color: AppColors.textSecondary)),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text("Batal",
+                                  style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.danger),
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text("Hapus", style: GoogleFonts.poppins()),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    if (confirm == true && scan.id != null) {
+                      _deleteItem(scan.id!, index);
+                    }
+                  },
+                ),
               ),
             ],
           ),
