@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../models/butterfly_model.dart';
@@ -171,7 +171,7 @@ class ApiService {
 
   // --- SCAN & COLLECTION ---
 
-  static Future<ScanResultModel> scanImage(File imageFile) async {
+  static Future<ScanResultModel> scanImage(XFile imageFile) async {
     final uri = Uri.parse('$baseUrl/api/scan');
     final request = http.MultipartRequest('POST', uri);
 
@@ -182,9 +182,17 @@ class ApiService {
     }
     request.headers['Accept'] = 'application/json';
 
-    // Lampirkan file gambar
-    request.files
-        .add(await http.MultipartFile.fromPath('image', imageFile.path));
+    // Lampirkan file gambar sesuai platform (Web vs Mobile)
+    if (kIsWeb) {
+      final bytes = await imageFile.readAsBytes();
+      request.files.add(http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: imageFile.name,
+      ));
+    } else {
+      request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    }
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);

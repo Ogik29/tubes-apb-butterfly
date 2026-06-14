@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,7 +15,7 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  File? _selectedImage;
+  XFile? _selectedImage;
   bool _isAnalyzing = false;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -25,7 +26,7 @@ class _ScanScreenState extends State<ScanScreen> {
       maxWidth: 1024,
     );
     if (picked != null) {
-      setState(() => _selectedImage = File(picked.path));
+      setState(() => _selectedImage = picked);
     }
   }
 
@@ -124,12 +125,19 @@ class _ScanScreenState extends State<ScanScreen> {
         child: _selectedImage != null
             ? Stack(
                 children: [
-                  Image.file(
-                    _selectedImage!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
+                  kIsWeb
+                      ? Image.network(
+                          _selectedImage!.path,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                      : Image.file(
+                          io.File(_selectedImage!.path),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
                   if (_isAnalyzing)
                     Container(
                       color: Colors.black.withOpacity(0.6),
