@@ -1,10 +1,10 @@
-# 🦋 Mothra App — Aplikasi Identifikasi Kupu-Kupu Beracun Berbasis CNN
+# Mothra App — Aplikasi Identifikasi Kupu-Kupu Beracun Berbasis CNN
 
 Mothra App adalah proyek monorepo aplikasi seluler (Flutter) yang diintegrasikan dengan REST API (Laravel) dan Model Kecerdasan Buatan (Python TensorFlow Lite) untuk mengidentifikasi spesies kupu-kupu beserta status toksisitasnya (beracun/aman).
 
 ---
 
-## 🏗️ Arsitektur Sistem
+## Arsitektur Sistem
 
 ```
 ┌──────────────────┐               ┌─────────────────┐               ┌────────────────────────┐
@@ -15,7 +15,7 @@ Mothra App adalah proyek monorepo aplikasi seluler (Flutter) yang diintegrasikan
 
 ---
 
-## 🛠️ Prasyarat (Prerequisites)
+## Prerequisites
 Pastikan komputer Anda sudah terinstal perlengkapan berikut:
 * **Flutter SDK** (Versi >= 3.5.0)
 * **PHP** (Versi >= 8.2) & **Composer**
@@ -24,7 +24,7 @@ Pastikan komputer Anda sudah terinstal perlengkapan berikut:
 
 ---
 
-## 🚀 Panduan Setup Lokal
+## Panduan Setup Lokal
 
 ### Langkah 1: Kloning Repositori
 ```bash
@@ -135,7 +135,7 @@ Buka terminal baru di direktori utama/root proyek (`tubes-apb-butterfly`).
 
 ---
 
-## 🔑 Akun Uji Coba Default (Seeder)
+## Seeder
 Anda dapat menggunakan kredensial berikut untuk masuk ke aplikasi setelah menjalankan seed:
 
 * **Akun Admin**:
@@ -147,7 +147,7 @@ Anda dapat menggunakan kredensial berikut untuk masuk ke aplikasi setelah menjal
 
 ---
 
-## 🛠️ Pemecahan Masalah (Troubleshooting)
+## Troubleshooting
 * **Pesan "Prediksi model gagal" saat memindai**:
   Pastikan Anda telah membuat virtual environment python (`venv`) dengan benar dan menginstal seluruh package di `ml/requirements.txt`.
 * **Koneksi Ditolak/Timeout di HP Fisik**:
