@@ -105,7 +105,7 @@ cd tubes-apb-butterfly
 3. **Upgrade pip dan install dependensi**:
    ```bash
    pip install --upgrade pip
-   pip install -r ml/requirements.txt
+   pip install -r ml/requirements.txt (jika muncul eror lgsg run pip install tensorflow)
    ```
 4. **Matikan Virtual Environment**:
    Setelah instalasi sukses, matikan virtual environment dengan mengetik:
